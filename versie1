@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+</head>
+<body>
+    
+<div style="margin: 30px" style = "border: red 5px solid" >
+   
+<br>
+    
+<font size="4" style="color:blue"> Connection Status:   </font>   
+<button class="btn-default" style="background-color: red" id='connect'> Click me to connect </button> 
+    
+<br>
+<hr>
+
+<font size="4">D7    :  </font> 
+<button class="btn btn-success"  id='readd7'> READ </button> 
+<br>
+
+<hr>
+
+ <font size="5">1. </font>
+  <button class="btn btn-success" onclick="if(confirm('Do you really want to turn D7 on?')){}else{return false;};" id='d7on'>ON </button> 
+  <button class="btn btn-danger" onclick="if(confirm('Do you really want to turn D7 OFF?')){}else{return false;};" id='d7off'>OFF </button> 
+  <hr>
+
+<hr>
+</div>
+</body>
+<script>
+
+//The class for the BLE connection. Obscure name generated from the Boilerplate.
+
+class PlaybulbCandle {
+
+constructor() {
+  this.device = null;
+  this.onDisconnected = this.onDisconnected.bind(this);
+}
+
+//Looking for the particular Uuid from the Particle
+async request() {
+  let options = {
+    "filters": [{
+      services: ['4753062c-ad02-4094-9abf-98581772463c']
+    }],
+    "optionalServices": [ ]
+ 
+  };
+  this.device = await navigator.bluetooth.requestDevice(options);
+  if (!this.device) {
+    throw "No device selected";
+  }
+  this.device.addEventListener('gattserverdisconnected', this.onDisconnected);
+}
+
+    
+//Connecting to the Particle
+async connect() {
+  if (!this.device) {
+    return Promise.reject('Device is not connected.');
+  }
+  await this.device.gatt.connect();
+   var text = ('Connected');   
+    
+myFunction1();
+     document.getElementById('connect').innerHTML = text; 
+}
+    
+async disconnect() {
+  if (!bluetoothDevice) {
+    return;
+  }
+  log('Disconnecting from Bluetooth Device...');
+  if (bluetoothDevice.gatt.connected) {
+    bluetoothDevice.gatt.disconnect();
+  } else {
+    log('> Bluetooth Device is already disconnected');
+  }
+}
+    
+    
+
+//This is unused, but you can use this to read values from the Particle
+async readSomethingreadd7() {
+const service = await this.device.gatt.getPrimaryService("4753062c-ad02-4094-9abf-98581772463c");   
+
+myFunction2();
+    
+var characteristic = await service.getCharacteristic("0218317c-de04-11ea-87d0-0242ac130003");
+characteristic.addEventListener('characteristicvaluechanged', handlereadd7Notifications); 
+await characteristic.readValue();
+}
+
+async writeSomethingLED1(data) {
+  const service = await this.device.gatt.getPrimaryService("4753062c-ad02-4094-9abf-98581772463c");
+  const characteristic = await service.getCharacteristic("9cf8f670-e1fd-11ea-87d0-0242ac130003");
+  await characteristic.writeValue(data);
+}
+    
+//tells you whether or not something has been disconnected
+disconnect() {
+  if (!this.device) {
+    return Promise.reject('Device is not connected.');
+  }
+  return this.device.gatt.disconnect();
+      var text = ("Disconnected");
+    myFunction();
+    document.getElementById('connect').innerHTML = text;
+}
+
+onDisconnected() {
+  console.log('Device is disconnected.');
+     var text = ("Disconnected");
+    myFunction();
+    document.getElementById('connect').innerHTML = text;
+}
+}
+//************************* class finished
+
+//instanitating a new BLE connection object
+var playbulbCandle = new PlaybulbCandle();
+
+//standard Javascript getElementbyID click events
+document.getElementById('connect').addEventListener('click', async event => {
+try {
+  await playbulbCandle.request();
+  await playbulbCandle.connect();
+  /* Do something with playbulbCandle... */
+} catch(error) {
+  console.log(error);
+}
+});
+
+//standard Javascript getElementbyID click events
+document.getElementById('connect').addEventListener('click', async event => {
+try {
+  await playbulbCandle.disconnect();
+  /* Do something with playbulbCandle... */
+} catch(error) {
+  console.log(error);
+}
+});
+
+document.getElementById('d7on').addEventListener('click', async event => {
+try {
+  var turnLight = Uint8Array.of(1);
+  await playbulbCandle.writeSomethingLED1(turnLight);
+  console.log("Turning D7 On");
+  /* Do something with playbulbCandle... */
+} catch(error) {
+  console.log(error);
+}
+});
+
+document.getElementById('d7off').addEventListener('click', async event => {
+try {
+  var turnLight = Uint8Array.of(0);
+  await playbulbCandle.writeSomethingLED1(turnLight);
+  console.log("Turning D7 Off");
+
+  /* Do something with playbulbCandle... */
+} catch(error) {
+  console.log(error);
+}
+});
+
+document.getElementById('readd7').addEventListener('click', async event => {
+try {
+  var read = Uint8Array.of(0);
+  await playbulbCandle.readSomethingreadd7(read);
+  console.log("Trying to read D7 state");
+
+  /* Do something with playbulbCandle... */
+} catch(error) {
+  console.log(error);
+}
+});
+
+function handlereadd7Notifications(event) {
+// 
+	var value = event.target.value.getUint8(0);
+	 console.log('readd7=' + value);
+	// OFF = 0,
+	// ON = 1,
+	var text;
+	switch(value) {
+	case 1:
+		text = 'ON';
+		break;
+	case 0:
+	default:
+		text = 'OFF';
+		break;
+	}	
+	document.getElementById('readd7').innerHTML = text;
+}
+    
+function myFunction() {
+  document.getElementById("connect").style.backgroundColor = "red";
+}
+    
+function myFunction1() {
+  document.getElementById("connect").style.backgroundColor = "lawngreen";
+}
+    
+    function myFunction2() {
+    document.getElementById("readd7").style.color = "red";
+}
+     
+</script>
+</html>
